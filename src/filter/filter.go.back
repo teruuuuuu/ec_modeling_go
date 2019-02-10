@@ -1,0 +1,11 @@
+package filter
+
+import (
+	"fmt"
+
+	"github.com/gin-gonic/gin"
+)
+
+func TestFilter(c *gin.Context) {
+	fmt.Println("test filter")
+}

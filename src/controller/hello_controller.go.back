@@ -1,0 +1,26 @@
+package controller
+
+import (
+	"net/http"
+
+	"../filter"
+	"github.com/gin-gonic/gin"
+)
+
+var h_group = func() ControllerGroup {
+	var (
+		h_controller = []Controller{}
+	)
+	addController := func(method int32, path string, handler func(c *gin.Context)) {
+		h_controller = append(h_controller, Controller{method: method, path: path, handler: handler})
+	}
+	addController(get, "/user/:name", func(c *gin.Context) {
+		name := c.Param("name")
+		c.String(http.StatusOK, "Hello %s", name)
+	})
+
+	var filter = func(c *gin.Context) {
+		filter.TestFilter(c)
+	}
+	return ControllerGroup{group: "hello", controllers: h_controller, filter: filter}
+}()

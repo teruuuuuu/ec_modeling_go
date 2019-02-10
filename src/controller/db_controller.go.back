@@ -1,0 +1,91 @@
+package controller
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
+)
+
+var d_group = func() ControllerGroup {
+	var (
+		controllers = []Controller{}
+	)
+	addController := func(method int32, path string, handler func(c *gin.Context)) {
+		controllers = append(controllers, Controller{method: method, path: path, handler: handler})
+	}
+	addController(get, "/test", dbTest)
+
+	var filter = func(c *gin.Context) {}
+	return ControllerGroup{group: "db", controllers: controllers, filter: filter}
+}()
+
+type Product struct {
+	ProductId uint `gorm:"primary_key"`
+	Code      string
+	Price     uint
+}
+
+type Item struct {
+	ItemId    uint `gorm:"primary_key"`
+	ProductId uint `gorm:"index"`
+	Number    uint
+	Price     uint
+}
+
+type ItemDetail struct {
+	ItemId    uint
+	ProductId uint
+	Number    uint
+	Price     uint
+	Code      string
+}
+
+func dbTest(c *gin.Context) {
+	fmt.Println("db test")
+	db, err := gorm.Open("sqlite3", "./tmp/gorm.db")
+	if err != nil {
+		fmt.Errorf("invalid database source: %v is not a valid type", err)
+		c.String(http.StatusOK, "error")
+	}
+	defer db.Close()
+	db.LogMode(true)
+	db.DB().SetMaxIdleConns(10)
+
+	tx := db.Begin()
+	// tx.Create("migration")
+	defer tx.Rollback()
+
+	db.AutoMigrate(&Product{})
+	db.AutoMigrate(&Item{})
+
+	var product = Product{Code: "L1212", Price: 1000}
+	db.Create(&product)
+	db.Create(&Product{Code: "L1213", Price: 4000})
+	db.Create(&Item{ProductId: product.ProductId, Number: 3, Price: 100})
+
+	errors.New("Error message")
+	// tx.Commit()
+
+	db.First(&product) // find product with id 1
+	// db.First(&product, "code = ?", "L1212") // find product with code l1212
+	fmt.Println("select result")
+	fmt.Println(product.ProductId)
+	fmt.Println(product.Code)
+	fmt.Println(product.Price)
+
+	// Update - update product's price to 2000
+	// db.Model(&product).Update("Price", 2000)
+
+	rows, err := db.Raw("select i.item_id, i.product_id, i.number, i.price, p.code from items i join products p on i.product_id = p.product_id").Rows() // (*sql.Rows, error)
+	var itemDetail ItemDetail
+	for rows.Next() {
+		rows.Scan(&itemDetail.ItemId, &itemDetail.ProductId, &itemDetail.Number, &itemDetail.Price, &itemDetail.Code)
+		fmt.Println(itemDetail)
+	}
+
+	// db.Delete(&product)
+}
