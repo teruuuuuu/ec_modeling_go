@@ -27,6 +27,7 @@ type ControllerGroup struct {
 
 func SetController(app *app.App, engine *gin.Engine) {
 	product_group(app).addController(engine)
+	order_group(app).addController(engine)
 	// h_group.addController(engine)
 	// d_group.addController(engine)
 }
