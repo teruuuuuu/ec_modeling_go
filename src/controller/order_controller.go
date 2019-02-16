@@ -14,6 +14,14 @@ type ItemForm struct {
 	Number    uint `json:"number" binding:"required"`
 }
 
+type CouponForm struct {
+	Number string `json:"number" binding:"required"`
+}
+
+type ConfirmForm struct {
+	PayType int `json:"paytype" binding:"required"`
+}
+
 func order_group(app *app.App) *ControllerGroup {
 	var (
 		order_controller = []Controller{}
@@ -42,6 +50,38 @@ func order_group(app *app.App) *ControllerGroup {
 	addController(get, "/cartItems", func(c *gin.Context, as *session.AppSession) {
 		_, loginUser := as.GetLoginUser()
 		c.JSON(200, gin.H{"result": app.CartItems(loginUser.UserId)})
+	})
+
+	addController(post, "/addCoupon", func(c *gin.Context, as *session.AppSession) {
+		couponForm := CouponForm{}
+		c.BindJSON(&couponForm)
+		_, loginUser := as.GetLoginUser()
+
+		if app.AddCoupon(loginUser.UserId, couponForm.Number) {
+			c.JSON(200, gin.H{
+				"result": "success",
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"result": "fail",
+			})
+		}
+	})
+
+	addController(post, "/confirm", func(c *gin.Context, as *session.AppSession) {
+		confirmForm := ConfirmForm{}
+		c.BindJSON(&confirmForm)
+		_, loginUser := as.GetLoginUser()
+
+		if app.Confirm(loginUser.UserId, confirmForm.PayType) {
+			c.JSON(200, gin.H{
+				"result": "success",
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"result": "fail",
+			})
+		}
 	})
 
 	return &ControllerGroup{group: "order", controllers: order_controller}

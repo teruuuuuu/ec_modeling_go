@@ -57,7 +57,7 @@ func (oa *OrderAggregate) AddCoupon(couponId *uint, discount uint) bool {
 	}
 	oa.UsedCoupon = append(oa.UsedCoupon,
 		order_model.UsedCoupon{OrderId: &oa.Order.OrderId, CouponId: couponId, Discount: discount})
-	return false
+	return true
 }
 
 func (oa *OrderAggregate) Confirm(paymentType int) bool {
